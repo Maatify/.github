@@ -150,6 +150,139 @@ There is **no third option**.
 
 ---
 
+## ⚙️ Integration CI — Options & Configuration
+
+Integration CI supports several **optional capabilities**.
+These options exist to adapt the workflow to different project needs,
+but **must be enabled intentionally**.
+
+> Integration CI is not a quality gate by default.
+> Each option must justify its execution cost.
+
+---
+
+### 🔹 PHPStan in Integration CI
+
+#### When to enable
+
+* Before a release
+* When integration changes introduce new logic paths
+* When additional confidence is required beyond Library CI
+
+#### When to avoid
+
+* If PHPStan already runs in Library CI
+* If integration runtime becomes excessively slow
+
+#### Rules
+
+* If enabled, PHPStan **must be blocking**
+* Non-blocking static analysis is **not allowed**
+
+---
+
+### 🔹 Code Coverage in Integration CI
+
+#### When to enable
+
+* To observe **real execution paths**
+* To validate behavior not covered by unit tests
+* In application or adapter-heavy projects
+
+#### When to avoid
+
+* For pure infrastructure libraries
+* When unit test coverage is sufficient
+* When CI runtime is a concern
+
+#### Rules
+
+* Integration coverage is **informational only**
+* No minimum coverage thresholds
+* Coverage results must not block the pipeline
+
+---
+
+### 🔹 Debugging External Services
+
+Integration CI may include **non-blocking diagnostics**
+to help troubleshoot service availability.
+
+Examples:
+
+* Redis ping
+* MySQL connection check
+* MongoDB ping
+
+#### Rules
+
+* Must use `continue-on-error: true`
+* Must not affect CI success or failure
+
+---
+
+### 🔹 Schema & Data Initialization
+
+Integration CI may initialize:
+
+* Database schemas
+* Indexes
+* Collections
+
+#### Rules
+
+* Integration schemas must be isolated
+* Production schemas must never be reused
+* Initialization scripts must live under test fixtures
+
+---
+
+### 🔹 Telegram Notifications
+
+Telegram notifications are **mandatory** for Integration CI.
+
+They provide:
+
+* Pass / Fail status
+* Execution duration
+* Repository and reference information
+* Direct link to CI logs
+
+---
+
+### 🔹 Execution Duration Tracking
+
+Execution time must always be calculated.
+
+Purpose:
+
+* Detect performance regressions
+* Identify stalled or hanging integration runs
+* Monitor infrastructure stability
+
+---
+
+## 🧭 Integration Options Summary
+
+| Option         | Default  | Purpose                      |
+| -------------- | -------- | ---------------------------- |
+| PHPStan        | Off      | Extra static confidence      |
+| Coverage       | Off      | Observe real execution paths |
+| Debug services | Optional | Troubleshooting only         |
+| Schema init    | Optional | Required for DB-backed tests |
+| Telegram       | On       | Visibility & alerting        |
+| Duration       | On       | Performance monitoring       |
+
+---
+
+## 🔒 Enforcement Rule
+
+> **If an integration option is enabled, it must be justified.**
+> Blindly enabling all options is considered misuse.
+
+> Integration CI options exist to increase confidence — not to compensate for missing unit tests.
+---
+
 ## 🔒 Governance Rules (LOCKED)
 
 * Projects **must not modify** centralized workflows locally
