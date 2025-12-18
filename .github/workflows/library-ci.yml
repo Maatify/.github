@@ -19,7 +19,7 @@ jobs:
 
     strategy:
       matrix:
-        php: [ "8.2", "8.3" ]
+        php: [ "8.3", "8.4" ]
 
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          coverage: pcov
+          coverage: ${{ github.event_name == 'push' && 'pcov' || 'none' }}
           tools: composer
 
       - run: composer install --no-interaction --prefer-dist --no-progress
@@ -35,15 +35,21 @@ jobs:
       - name: 🧹 Run PHPStan
         run: composer analyse
 
-      - name: 🧪 Run PHPUnit with Coverage
+      - name: 🧪 Run PHPUnit
         run: |
-          vendor/bin/phpunit \
+          if [ "${{ github.event_name }}" = "push" ]; then
+            vendor/bin/phpunit \
             --configuration phpunit.xml.dist \
             --coverage-clover coverage.xml \
             | tee phpunit.log
+          else
+            vendor/bin/phpunit \
+              --configuration phpunit.xml.dist
+          fi
 
       - name: Extract Coverage
         id: coverage
+        if: github.event_name == 'push'
         run: |
           COV=$(php -r '
             $x=@simplexml_load_file("coverage.xml");
