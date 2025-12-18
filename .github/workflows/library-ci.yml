@@ -44,17 +44,17 @@ jobs:
           echo "phpstan_exit=$EXIT_CODE" >> $GITHUB_OUTPUT
           # echo "PHPSTAN_ERRORS=$ERRORS" >> $GITHUB_ENV
           echo "phpstan_errors=$ERRORS" >> $GITHUB_OUTPUT
-            - name: 🧪 Run PHPUnit
-              run: |
-                if [ "${{ github.event_name }}" = "push" ]; then
-                  vendor/bin/phpunit \
-                  --configuration phpunit.xml.dist \
-                  --coverage-clover coverage.xml \
-                  | tee phpunit.log
-                else
-                  vendor/bin/phpunit \
-                    --configuration phpunit.xml.dist
-                fi
+      - name: 🧪 Run PHPUnit
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            vendor/bin/phpunit \
+            --configuration phpunit.xml.dist \
+            --coverage-clover coverage.xml \
+            | tee phpunit.log
+          else
+            vendor/bin/phpunit \
+              --configuration phpunit.xml.dist
+          fi
 
       - name: Extract Coverage
         id: coverage
