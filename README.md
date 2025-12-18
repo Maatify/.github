@@ -1,5 +1,17 @@
 # 📘 Maatify CI Policy
 
+---
+
+## ⚡ TL;DR — Maatify CI Policy
+
+* **Library CI is the default** for all libraries: unit tests, PHPStan, coverage, and no external services.
+* **Integration CI is optional and explicit**: used only when real databases or services are required.
+* **Never mix Library CI and Integration CI** in the same workflow.
+* **Integration CI options** (PHPStan, coverage, services) must be enabled intentionally and justified.
+* **If Docker, DSNs, or real connections are needed → Integration CI. Otherwise → Library CI.**
+
+---
+
 This repository contains **official, centralized GitHub Actions workflows**
 used across the **Maatify ecosystem**.
 
