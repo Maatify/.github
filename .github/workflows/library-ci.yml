@@ -19,10 +19,18 @@ jobs:
 
     strategy:
       matrix:
-        php: [ "8.4" ]
+        php: [ "8.4", "8.3", "8.2" ]
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.composer/cache/files
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -40,10 +48,10 @@ jobs:
           EXIT_CODE=$?
           ERRORS=$(grep -Eo "Found [0-9]+ errors" phpstan.log | grep -Eo "[0-9]+")
           if [ -z "$ERRORS" ]; then ERRORS=0; fi
-      
+          
           echo "phpstan_exit=$EXIT_CODE" >> $GITHUB_OUTPUT
-          # echo "PHPSTAN_ERRORS=$ERRORS" >> $GITHUB_ENV
           echo "phpstan_errors=$ERRORS" >> $GITHUB_OUTPUT
+
       - name: 🧪 Run PHPUnit
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
@@ -55,6 +63,20 @@ jobs:
             vendor/bin/phpunit \
               --configuration phpunit.xml.dist
           fi
+
+      - name: Upload PHPStan log
+        uses: actions/upload-artifact@v3
+        if: failure() && steps.phpstan.outputs.phpstan_errors > 0
+        with:
+          name: phpstan-log-${{ matrix.php }}
+          path: phpstan.log
+
+      - name: Upload PHPUnit log
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: phpunit-log-${{ matrix.php }}
+          path: phpunit.log
 
       - name: Extract Coverage
         id: coverage
@@ -75,12 +97,12 @@ jobs:
         run: |
           echo "### 🧾 Library CI Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-      
+          
           echo "📦 Repository: $GITHUB_REPOSITORY" >> $GITHUB_STEP_SUMMARY
           echo "🌿 Branch: $GITHUB_REF_NAME" >> $GITHUB_STEP_SUMMARY
           echo "🐘 PHP: ${{ matrix.php }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-      
+          
           # PHPUnit
           echo "#### 🧪 PHPUnit" >> $GITHUB_STEP_SUMMARY
           if [ -f phpunit.log ]; then
@@ -95,9 +117,9 @@ jobs:
           else
             echo "(phpunit.log not found)" >> $GITHUB_STEP_SUMMARY
           fi
-      
+          
           echo "" >> $GITHUB_STEP_SUMMARY
-      
+          
           # PHPStan
           PHPSTAN_ERR="${{ steps.phpstan.outputs.phpstan_errors }}"
           echo "#### 🧹 PHPStan" >> $GITHUB_STEP_SUMMARY
@@ -108,9 +130,9 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             tail -n 20 phpstan.log >> $GITHUB_STEP_SUMMARY
           fi
-      
+          
           echo "" >> $GITHUB_STEP_SUMMARY
-      
+          
           # Coverage
           if [ "${{ github.event_name }}" = "push" ]; then
             echo "#### 📊 Coverage" >> $GITHUB_STEP_SUMMARY
