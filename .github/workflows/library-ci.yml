@@ -142,16 +142,18 @@ jobs:
           COLOR="🟢"
           [ "${{ job.status }}" != "success" ] && STATUS="❌ Failed" && COLOR="🔴"
 
-          MESSAGE="📢 <b>Maatify Library CI</b>
-
-          ${COLOR} ${STATUS}
-
           PHPSTAN_ERR=${{ steps.phpstan.outputs.phpstan_errors }}
           if [ "$PHPSTAN_ERR" -eq 0 ]; then
             PHPSTAN_SUMMARY="🧹 <b>PHPStan:</b> Passed (0 errors)"
           else
             PHPSTAN_SUMMARY="🧹 <b>PHPStan:</b> ${PHPSTAN_ERR} errors"
           fi
+
+          MESSAGE="📢 <b>Maatify Library CI</b>
+
+          ${COLOR} ${STATUS}
+
+          ${PHPSTAN_SUMMARY}
 
           📦 <b>Repo:</b> ${GITHUB_REPOSITORY}
           🌿 <b>Branch:</b> ${GITHUB_REF_NAME}
