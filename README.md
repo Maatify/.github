@@ -162,6 +162,24 @@ There is **no third option**.
 
 ---
 
+## 📘 CI Usage Guide
+
+Practical usage examples for all official Maatify CI workflows
+are documented separately.
+
+This includes:
+- How to enable Library CI in a project
+- How to enable Integration CI correctly
+- Valid triggers and execution patterns
+- Common misuses to avoid
+
+➡️ See **[USAGE.md](./USAGE.md)** for full usage instructions.
+
+> This README defines **policy and enforcement**.  
+> `USAGE.md` focuses strictly on **how to apply the workflows**.
+
+---
+
 ## ⚙️ Integration CI — Options & Configuration
 
 Integration CI supports several **optional capabilities**.
