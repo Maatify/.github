@@ -1,0 +1,88 @@
+name: Coverage Badge Publisher
+
+on:
+  workflow_call:
+    inputs:
+      coverage:
+        required: true
+        type: string
+      badges_branch:
+        required: false
+        type: string
+        default: badges
+      badge_file:
+        required: false
+        type: string
+        default: coverage.json
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build badge JSON
+        id: badge
+        run: |
+          COV="${{ inputs.coverage }}"
+          if [ -z "$COV" ] || [ "$COV" = "N/A" ]; then
+            COV="0"
+          fi
+
+          # Color thresholds
+          if [ "$COV" -ge 95 ]; then
+            COLOR="brightgreen"
+          elif [ "$COV" -ge 90 ]; then
+            COLOR="green"
+          elif [ "$COV" -ge 80 ]; then
+            COLOR="yellow"
+          elif [ "$COV" -ge 70 ]; then
+            COLOR="orange"
+          else
+            COLOR="red"
+          fi
+
+          echo "{
+            \"schemaVersion\": 1,
+            \"label\": \"coverage\",
+            \"message\": \"${COV}%\",
+            \"color\": \"${COLOR}\"
+          }" > coverage.json
+
+          cp coverage.json /tmp/coverage.json
+          echo "cov=$COV" >> $GITHUB_OUTPUT
+
+      - name: Push badge to badges branch
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          git fetch origin
+
+          BRANCH="${{ inputs.badges_branch }}"
+          OUTFILE="${{ inputs.badge_file }}"
+
+          if git ls-remote --exit-code origin "$BRANCH" >/dev/null 2>&1; then
+            git checkout "$BRANCH"
+          else
+            git checkout --orphan "$BRANCH"
+          fi
+
+          git reset --hard
+          git clean -fdx
+
+          cp /tmp/coverage.json "$OUTFILE"
+          git add -f "$OUTFILE"
+
+          if git diff --cached --quiet; then
+            echo "No badge changes"
+          else
+            git commit -m "Update coverage badge (${{ steps.badge.outputs.cov }}%)"
+            git push origin "$BRANCH" --force
+          fi

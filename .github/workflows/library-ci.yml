@@ -8,11 +8,18 @@ on:
       TELEGRAM_CI_CHAT_ID:
         required: true
 
+    outputs:
+      coverage:
+        description: "Coverage percent (push only). Empty on PR."
+        value: ${{ jobs.test.outputs.coverage }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      coverage: ${{ steps.coverage.outputs.coverage }}
 
     env:
       GH_START_ISO: ${{ github.event.head_commit.timestamp }}
