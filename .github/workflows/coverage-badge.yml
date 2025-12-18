@@ -55,7 +55,7 @@ jobs:
             \"color\": \"${COLOR}\"
           }" > coverage.json
 
-          cp coverage.json /tmp/coverage.jsoncp coverage.json /tmp/coverage.json
+          cp coverage.json /tmp/coverage.json
           rm -f coverage.json
           echo "cov=$COV" >> $GITHUB_OUTPUT
 
