@@ -33,19 +33,27 @@ jobs:
       - run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: 🧹 Run PHPStan
-        run: composer analyse
-
-      - name: 🧪 Run PHPUnit
+        id: phpstan
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            vendor/bin/phpunit \
-            --configuration phpunit.xml.dist \
-            --coverage-clover coverage.xml \
-            | tee phpunit.log
-          else
-            vendor/bin/phpunit \
-              --configuration phpunit.xml.dist
-          fi
+          set +e
+          composer analyse > phpstan.log
+          EXIT_CODE=$?
+          ERRORS=$(grep -Eo "Found [0-9]+ errors" phpstan.log | grep -Eo "[0-9]+")
+          if [ -z "$ERRORS" ]; then ERRORS=0; fi
+      
+          echo "phpstan_exit=$EXIT_CODE" >> $GITHUB_OUTPUT
+          echo "phpstan_errors=$ERRORS" >> $GITHUB_OUTPUT
+            - name: 🧪 Run PHPUnit
+              run: |
+                if [ "${{ github.event_name }}" = "push" ]; then
+                  vendor/bin/phpunit \
+                  --configuration phpunit.xml.dist \
+                  --coverage-clover coverage.xml \
+                  | tee phpunit.log
+                else
+                  vendor/bin/phpunit \
+                    --configuration phpunit.xml.dist
+                fi
 
       - name: Extract Coverage
         id: coverage
@@ -61,17 +69,56 @@ jobs:
           ')
           echo "coverage=$COV" >> $GITHUB_OUTPUT
 
-      - name: 🧾 Summary
+      - name: 🧾 Detailed CI Summary
         if: always()
         run: |
           echo "### 🧾 Library CI Summary" >> $GITHUB_STEP_SUMMARY
-          echo "📦 $GITHUB_REPOSITORY" >> $GITHUB_STEP_SUMMARY
-          echo "🐘 PHP ${{ matrix.php }}" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ github.event_name }}" = "push" ]; then
-            echo "📊 Coverage: ${{ steps.coverage.outputs.coverage }}%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+          echo "📦 Repository: $GITHUB_REPOSITORY" >> $GITHUB_STEP_SUMMARY
+          echo "🌿 Branch: $GITHUB_REF_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "🐘 PHP: ${{ matrix.php }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+          # PHPUnit
+          echo "#### 🧪 PHPUnit" >> $GITHUB_STEP_SUMMARY
+          if [ -f phpunit.log ]; then
+            tail -n 25 phpunit.log >> $GITHUB_STEP_SUMMARY
+            if grep -q "FAILURES!" phpunit.log; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "❌ Some tests failed." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "✅ All tests passed." >> $GITHUB_STEP_SUMMARY
+            fi
           else
-            echo "📊 Coverage: skipped (PR)" >> $GITHUB_STEP_SUMMARY
+            echo "(phpunit.log not found)" >> $GITHUB_STEP_SUMMARY
           fi
+      
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+          # PHPStan
+          PHPSTAN_ERR="${{ steps.phpstan.outputs.phpstan_errors }}"
+          echo "#### 🧹 PHPStan" >> $GITHUB_STEP_SUMMARY
+          if [ "$PHPSTAN_ERR" -eq 0 ]; then
+            echo "✅ Passed (0 errors)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ ${PHPSTAN_ERR} errors found" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            tail -n 20 phpstan.log >> $GITHUB_STEP_SUMMARY
+          fi
+      
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+          # Coverage
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "#### 📊 Coverage" >> $GITHUB_STEP_SUMMARY
+            echo "Coverage: ${{ steps.coverage.outputs.coverage }}%" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "#### 📊 Coverage" >> $GITHUB_STEP_SUMMARY
+            echo "Skipped (PR run)" >> $GITHUB_STEP_SUMMARY
+          fi
+
 
 
       - name: 📲 Notify Telegram
