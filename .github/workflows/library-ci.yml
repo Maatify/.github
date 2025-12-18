@@ -67,7 +67,12 @@ jobs:
           echo "### 🧾 Library CI Summary" >> $GITHUB_STEP_SUMMARY
           echo "📦 $GITHUB_REPOSITORY" >> $GITHUB_STEP_SUMMARY
           echo "🐘 PHP ${{ matrix.php }}" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Coverage: ${{ steps.coverage.outputs.coverage }}%" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "📊 Coverage: ${{ steps.coverage.outputs.coverage }}%" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "📊 Coverage: skipped (PR)" >> $GITHUB_STEP_SUMMARY
+          fi
+
 
       - name: 📲 Notify Telegram
         if: always()
