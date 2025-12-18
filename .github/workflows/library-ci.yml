@@ -42,6 +42,7 @@ jobs:
           if [ -z "$ERRORS" ]; then ERRORS=0; fi
       
           echo "phpstan_exit=$EXIT_CODE" >> $GITHUB_OUTPUT
+          # echo "PHPSTAN_ERRORS=$ERRORS" >> $GITHUB_ENV
           echo "phpstan_errors=$ERRORS" >> $GITHUB_OUTPUT
             - name: 🧪 Run PHPUnit
               run: |
@@ -144,6 +145,14 @@ jobs:
           MESSAGE="📢 <b>Maatify Library CI</b>
 
           ${COLOR} ${STATUS}
+          # PHPSTAN_ERR="${PHPSTAN_ERRORS:-0}"
+
+          PHPSTAN_ERR=${{ steps.phpstan.outputs.phpstan_errors }}
+          if [ "$PHPSTAN_ERR" -eq 0 ]; then
+            PHPSTAN_SUMMARY="🧹 <b>PHPStan:</b> Passed (0 errors)"
+          else
+            PHPSTAN_SUMMARY="🧹 <b>PHPStan:</b> ${PHPSTAN_ERR} errors"
+          fi
 
           📦 <b>Repo:</b> ${GITHUB_REPOSITORY}
           🌿 <b>Branch:</b> ${GITHUB_REF_NAME}
