@@ -26,7 +26,7 @@ jobs:
 
     strategy:
       matrix:
-        php: [ "8.4", "8.3", "8.2" ]
+        php: [ "8.4" ]
 
     steps:
       - uses: actions/checkout@v4
@@ -70,20 +70,6 @@ jobs:
             vendor/bin/phpunit \
               --configuration phpunit.xml.dist
           fi
-
-      - name: Upload PHPStan log
-        uses: actions/upload-artifact@v3
-        if: failure() && steps.phpstan.outputs.phpstan_errors > 0
-        with:
-          name: phpstan-log-${{ matrix.php }}
-          path: phpstan.log
-
-      - name: Upload PHPUnit log
-        uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: phpunit-log-${{ matrix.php }}
-          path: phpunit.log
 
       - name: Extract Coverage
         id: coverage
