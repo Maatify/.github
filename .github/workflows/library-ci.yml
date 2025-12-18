@@ -12,7 +12,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
 
     env:
       GH_START_ISO: ${{ github.event.head_commit.timestamp }}
